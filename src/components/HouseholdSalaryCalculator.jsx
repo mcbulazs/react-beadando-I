@@ -8,7 +8,7 @@ const HouseholdSalaryCalculator = () => {
 			<header>
 				<FamilyMemberTabs />
 			</header>
-			<main>
+			<main className="flex flex-row">
 				<SalaryCalculator name="Kis Imre" />
 
 				<HouseholdSummary />
