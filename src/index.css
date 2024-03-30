@@ -1,3 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 /*
 Ajánlott CSS beállítások (nyugodtan kitörölheted, ha más megoldásokat szeretnél használni)
 További információ: https://www.joshwcomeau.com/css/custom-css-reset/
