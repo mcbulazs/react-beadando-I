@@ -94,7 +94,7 @@ const SalaryCalculator = ({ name }) => {
 		return false;
 	}
 	return (
-		<div className="bg-gray-300 w-3/12 min-w-64 p-8 rounded-lg">
+		<div className="bg-gray-300 w-full min-w-64 p-8 rounded-lg">
 			<h1 className="uppercase font-bold mb-5"> {name} bérének kiszámítása</h1>
 			<BasicInput
 				name="Családtag neve"

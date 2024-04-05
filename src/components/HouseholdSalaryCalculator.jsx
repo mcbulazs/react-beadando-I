@@ -5,13 +5,11 @@ import SalaryCalculator from "./SalaryCalculator/SalaryCalculator";
 const HouseholdSalaryCalculator = () => {
 	return (
 		<>
-			<header>
+			<header className="w-3/12">
 				<FamilyMemberTabs />
 			</header>
-			<main className="flex flex-row">
-				<SalaryCalculator name="Kis Imre" />
-
-				<HouseholdSummary />
+			<main className="w-3/12 flex flex-row">
+				<SalaryCalculator />
 			</main>
 		</>
 	);
