@@ -5,7 +5,6 @@ const BasicInput = ({ name, desc, type, value, changeFunc }) => {
 			<input
 				maxLength="40"
 				type={type}
-				value={value}
 				className="p-2 shadow-sm h-10 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
 				value={value}
 				onChange={changeFunc}
