@@ -5,27 +5,57 @@ import Slider from "@mui/material/Slider";
 import Switch from "@mui/material/Switch";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PopupDialog from "./components/PopupDialog";
 
-const SalaryCalculator = ({ name }) => {
+const SalaryCalculator = ({ index, usersData, setUsersData, removeFunc }) => {
 	const [sliderState, setSliderState] = useState(100);
-	const [checkBoxes, setCheckBoxes] = useState({
-		under25: false,
-		freshMarried: false,
-		taxRelief: false,
-		familyRelief: false,
-	});
 	const [popupOpen, setPopupOpen] = useState(false);
-	//const [bruttoValue, setBruttoValue] = useState(0);
-	const [marriageDate, setMarriageDate] = useState("");
-	const [data, setData] = useState({
-		name: name,
-		brutto: 0,
-		sliderValue: 0,
+	const [data, setData] = useState(() => {
+		if (usersData[index]) {
+			return usersData[index];
+		} else {
+			return {
+				name: "",
+				brutto: 0,
+				netto: 0,
+				sliderValue: 0,
+				checkBoxes: {
+					under25: false,
+					freshMarried: false,
+					taxRelief: false,
+					familyRelief: false,
+				},
+				marriageDate: "",
+				eltartott: 0,
+				kedvezmenyezett: 0,
+			};
+		}
 	});
-	const [eltartott, setEltartott] = useState(0); // nem tudom hogy van angolul
-	const [kedvezmenyezett, setKedvezmenyezett] = useState(0);
+	useEffect(() => {
+		setUsersData({ ...usersData, [index]: data });
+	}, [data]);
+	useEffect(() => {
+		if (usersData[index]) {
+			setData(usersData[index]);
+		} else {
+			setData({
+				name: "",
+				brutto: 0,
+				netto: 0,
+				sliderValue: 0,
+				checkBoxes: {
+					under25: false,
+					freshMarried: false,
+					taxRelief: false,
+					familyRelief: false,
+				},
+				marriageDate: "",
+				eltartott: 0,
+				kedvezmenyezett: 0,
+			});
+		}
+	}, [index]);
 	function resetSlider() {
 		setSliderState(100);
 	}
@@ -38,54 +68,63 @@ const SalaryCalculator = ({ name }) => {
 		setData({ ...data, name: e.target.value });
 	}
 	function changeBrutto(e) {
+		let value = parseInt(e.target.value);
 		resetSlider();
-		setData({ ...data, brutto: e.target.value, sliderValue: e.target.value });
+		setData({ ...data, brutto: value, sliderValue: value });
 	}
 	function sliderChange(e, value) {
 		setSliderState(value);
 		const newValue = Math.round((data.sliderValue * value) / 100);
-		//setBruttoValue(newValue);
 		setData({ ...data, brutto: newValue });
 		//cant change data, bcs it will be overwritten by the next state
 	}
-	function calcNetto() {
-		let brutto = data.brutto;
-		let tax = 0;
-		tax += Math.round(brutto * 0.185); //TB
-		if (checkBoxes.under25) {
-			let temp = brutto - 499952;
-			if (temp > 0) {
-				tax += Math.round(temp * 0.15);
+	useEffect(() => {
+		function calcNetto() {
+			let brutto = data.brutto;
+			let tax = 0;
+			tax += Math.round(brutto * 0.185); // TB
+			if (data.checkBoxes.under25) {
+				let temp = brutto - 499952;
+				if (temp > 0) {
+					tax += Math.round(temp * 0.15);
+				}
+			} else {
+				tax += Math.round(brutto * 0.15);
 			}
-		} else {
-			tax += Math.round(brutto * 0.15);
-		}
-		if (checkBoxes.taxRelief) {
-			tax -= 77300;
-		}
-		if (checkBoxes.familyRelief) {
-			if (kedvezmenyezett == 1) {
-				tax -= 10000 * eltartott;
-			} else if (kedvezmenyezett == 2) {
-				tax -= 20000 * eltartott;
-			} else if (kedvezmenyezett >= 3) {
-				tax -= 33000 * eltartott;
+			if (data.checkBoxes.taxRelief) {
+				tax -= 77300;
 			}
+			if (data.checkBoxes.familyRelief) {
+				if (data.kedvezmenyezett == 1) {
+					tax -= 10000 * data.eltartott;
+				} else if (data.kedvezmenyezett == 2) {
+					tax -= 20000 * data.eltartott;
+				} else if (data.kedvezmenyezett >= 3) {
+					tax -= 33000 * data.eltartott;
+				}
+			}
+			if (tax < 0) {
+				tax = 0;
+			}
+			let netto = brutto - tax;
+			if (data.checkBoxes.freshMarried && calcMarriageDiscount()) {
+				netto += 5000;
+			}
+			return netto;
 		}
-		if (tax < 0) {
-			tax = 0;
-		}
-		let netto = brutto - tax;
-		if (checkBoxes.freshMarried && calcMarriageDiscount()) {
-			netto += 5000;
-		}
-		return netto;
-	}
-	function changeMarrigeDate(date) {
-		setMarriageDate(date);
-	}
+		setData({ ...data, netto: calcNetto() });
+	}, [
+		data.brutto,
+		data.checkBoxes.under25,
+		data.checkBoxes.taxRelief,
+		data.checkBoxes.familyRelief,
+		data.checkBoxes.freshMarried,
+		data.marriageDate,
+		data.eltartott,
+		data.kedvezmenyezett,
+	]);
 	function calcMarriageDiscount() {
-		let date = new Date(marriageDate);
+		let date = new Date(data.marriageDate);
 		date.setFullYear(date.getFullYear() + 2);
 		let now = new Date();
 		if (date > now) {
@@ -94,11 +133,19 @@ const SalaryCalculator = ({ name }) => {
 		return false;
 	}
 	return (
-		<div className="bg-gray-300 w-full min-w-64 p-8 rounded-lg">
-			<h1 className="uppercase font-bold mb-5"> {name} bérének kiszámítása</h1>
+		<div className="bg-gray-300  min-w-64 p-8 rounded-lg">
+			<div className="mb-5 flex flex-row justify-between">
+				<h1 className="uppercase font-bold">
+					{" "}
+					{data.name} bérének kiszámítása
+				</h1>
+				<button className="bg-white rounded-md p-1" onClick={removeFunc}>
+					🗑
+				</button>
+			</div>
 			<BasicInput
 				name="Családtag neve"
-				placeholder={name}
+				value={data.name}
 				desc="Add meg a családtag nevét!"
 				type="text"
 				changeFunc={changeName}
@@ -137,24 +184,34 @@ const SalaryCalculator = ({ name }) => {
 			<FormGroup className="mt-10 flex flex-col">
 				<FormControlLabel
 					onChange={(e) =>
-						setCheckBoxes({ ...checkBoxes, under25: e.target.checked })
+						setData({
+							...data,
+							checkBoxes: { ...data.checkBoxes, under25: e.target.checked },
+						})
 					}
+					checked={data.checkBoxes.under25}
 					control={<Switch />}
 					label="25 éven alattiak SZJA mentesssége"
 				/>
 				<span>
 					<FormControlLabel
 						onChange={(e) => {
-							setCheckBoxes({ ...checkBoxes, freshMarried: e.target.checked });
+							setData({
+								...data,
+								checkBoxes: {
+									...data.checkBoxes,
+									freshMarried: e.target.checked,
+								},
+							});
 							if (e.target.checked) {
 								setPopupOpen(true);
 							}
 						}}
 						control={<Switch />}
-						checked={checkBoxes.freshMarried}
+						checked={data.checkBoxes.freshMarried}
 						label="Friss házasok kedvezménye"
 					/>
-					{checkBoxes.freshMarried && (
+					{data.checkBoxes.freshMarried && (
 						<button
 							onClick={() => setPopupOpen(true)}
 							className="text-xs bg-blue-600 text-white rounded-lg p-1 mt-2"
@@ -162,7 +219,7 @@ const SalaryCalculator = ({ name }) => {
 							Dátum módosítása
 						</button>
 					)}
-					{checkBoxes.freshMarried && marriageDate && (
+					{data.checkBoxes.freshMarried && data.marriageDate && (
 						<p
 							className={`inline-block  text-xs text-white rounded-lg p-1 mt-2  ${
 								calcMarriageDiscount() ? "bg-green-400" : "bg-red-400"
@@ -174,67 +231,88 @@ const SalaryCalculator = ({ name }) => {
 				</span>
 				<FormControlLabel
 					onChange={(e) =>
-						setCheckBoxes({ ...checkBoxes, taxRelief: e.target.checked })
+						setData({
+							...data,
+							checkBoxes: { ...data.checkBoxes, taxRelief: e.target.checked },
+						})
 					}
+					checked={data.checkBoxes.taxRelief}
 					control={<Switch />}
 					label="Személyi adókedvezmény"
 				/>
 				<FormControlLabel
 					onChange={(e) =>
-						setCheckBoxes({ ...checkBoxes, familyRelief: e.target.checked })
+						setData({
+							...data,
+							checkBoxes: {
+								...data.checkBoxes,
+								familyRelief: e.target.checked,
+							},
+						})
 					}
+					checked={data.checkBoxes.familyRelief}
 					control={<Switch />}
 					label="Családi kedvezmény"
 				/>
-				{checkBoxes.familyRelief && (
+				{data.checkBoxes.familyRelief && (
 					<div className="flex align-center flex-row text-xs">
 						<InlineButton
 							content="-"
 							onClick={() => {
-								if (eltartott > 0) setEltartott(eltartott - 1);
+								if (data.eltartott > 0)
+									setData({ ...data, eltartott: data.eltartott - 1 });
 							}}
 						/>
-						<span> {eltartott} </span>
+						<span> {data.eltartott} </span>
 						<InlineButton
 							content="+"
 							onClick={() => {
-								setEltartott(eltartott + 1);
+								setData({ ...data, eltartott: data.eltartott + 1 });
 							}}
 						/>
 						Eltarott, ebből kedvezményezett:
 						<InlineButton
 							content="-"
 							onClick={() => {
-								if (kedvezmenyezett > 0)
-									setKedvezmenyezett(kedvezmenyezett - 1);
+								if (data.kedvezmenyezett > 0)
+									setData({
+										...data,
+										kedvezmenyezett: data.kedvezmenyezett - 1,
+									});
 							}}
 						/>
-						<span>{kedvezmenyezett}</span>
+						<span>{data.kedvezmenyezett}</span>
 						<InlineButton
 							content="+"
 							onClick={() => {
-								if (kedvezmenyezett < eltartott)
-									setKedvezmenyezett(kedvezmenyezett + 1);
+								if (data.kedvezmenyezett < Math.min(data.eltartott, 3))
+									setData({
+										...data,
+										kedvezmenyezett: data.kedvezmenyezett + 1,
+									});
 							}}
 						/>
 					</div>
 				)}
 			</FormGroup>
 			<PopupDialog
-				value={marriageDate}
+				value={data.marriageDate}
 				valueFunc={(date) => {
-					setMarriageDate(date);
+					setData({ ...data, marriageDate: date });
 				}}
 				state={popupOpen}
 				handleClose={(saved) => {
 					setPopupOpen(false);
 					if (saved !== true) {
-						setCheckBoxes({ ...checkBoxes, freshMarried: false });
+						setData({
+							...data,
+							checBoxes: { ...data.checkBoxes, freshMarried: false },
+						});
 					}
 				}}
 			/>
 			<div className="mx-auto w-24 font-bold text-center bg-cyan-400 rounded-md mt-10">
-				{calcNetto()} Ft
+				{data.netto} Ft
 			</div>
 		</div>
 	);

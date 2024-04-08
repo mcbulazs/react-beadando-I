@@ -1,25 +1,24 @@
 import Tab from "./components/Tab";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const FamilyMemberTabs = () => {
-	const [names, setNames] = useState([]);
-	const [activeTab, setActiveTab] = useState(0);
+const FamilyMemberTabs = ({ activeTab, setActiveTab, usersData }) => {
 	function changeTab(index) {
 		setActiveTab(index);
-		console.log("Tab changed to: " + index);
 	}
 	function createTab() {
-		setNames([...names, "New Member"]);
+		setActiveTab(Object.keys(usersData).length);
 	}
 	return (
 		<div className="flex flex-row my-1">
 			<div className="bg-gray-300 rounded-md flex m-1 flex-wrap">
-				{names.map((elem, index) => (
+				{Object.keys(usersData).map((key) => (
 					<Tab
-						key={index}
-						name={elem}
-						isActive={index == activeTab}
-						actionListener={() => changeTab(index)}
+						key={key}
+						name={
+							usersData[key].name == "" ? "Family member" : usersData[key].name
+						}
+						isActive={parseInt(key) == activeTab}
+						actionListener={() => changeTab(key)}
 					/>
 				))}
 			</div>
